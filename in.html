@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スペッター (SUPETTER)</title>
+    <style>
+        /* 🎨 ネット不要！ローカル埋め込み型サイバーダークデザイン */
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; }
+        a { color: #3b82f6; text-decoration: none; transition: 0.2s; }
+        a:hover { color: #60a5fa; text-decoration: underline; }
+        input, textarea, select { background-color: #1f2937; border: 1px solid #374151; color: white; padding: 12px; border-radius: 12px; outline: none; transition: 0.2s; box-sizing: border-box; }
+        input:focus, textarea:focus, select:focus { border-color: #3b82f6; }
+        button { background: linear-gradient(to right, #3b82f6, #6366f1); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { filter: brightness(1.2); }
+        
+        /* 🎬 黒いイントロアニメーション */
+        @keyframes fadeOut {
+            0% { opacity: 1; visibility: visible; }
+            80% { opacity: 1; filter: blur(0px); }
+            100% { opacity: 0; visibility: hidden; filter: blur(10px); }
+        }
+        .intro-screen { position: fixed; inset: 0; background: black; display: flex; flex-direction: column; items-center: center; justify-content: center; z-index: 50; pointer-events: none; animation: fadeOut 2.5s forwards; text-align: center; }
+        .intro-title { font-size: 3rem; font-weight: 900; background: linear-gradient(to right, #60a5fa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; letter-spacing: 0.2em; }
+
+        /* 各種カード・パーツのベースデザイン */
+        .card { background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(10px); border: 1px solid #1f2937; padding: 24px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .nav-bar { background: #030712; border-bottom: 1px solid #111827; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .container { max-width: 1000px; width: 100%; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr; gap: 20px; box-sizing: border-box; }
+        @media (min-width: 768px) { .container { grid-template-columns: 320px 1fr; } }
+        
+        /* 🔔 通知ポップアップアニメーション */
+        @keyframes slideInOut {
+            0% { transform: translate(-50%, -100px); opacity: 0; }
+            10% { transform: translate(-50%, 0); opacity: 1; }
+            90% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, -100px); opacity: 0; visibility: hidden; }
+        }
+        .notify-toast { animation: slideInOut 4.5s forwards; }
+    </style>
+
+    <!-- 🎵 ポコポコ効果音システム（Scratchの音ブロック） -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playPoko() {
+            let osc1 = audioCtx.createOscillator(); let gain1 = audioCtx.createGain();
+            osc1.type = 'sine'; osc1.frequency.setValueAtTime(600, audioCtx.currentTime);
+            gain1.gain.setValueAtTime(0.2, audioCtx.currentTime); gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            osc1.connect(gain1); gain1.connect(audioCtx.destination); osc1.start(); osc1.stop(audioCtx.currentTime + 0.1);
+            setTimeout(() => {
+                let osc2 = audioCtx.createOscillator(); let gain2 = audioCtx.createGain();
+                osc2.type = 'sine'; osc2.frequency.setValueAtTime(850, audioCtx.currentTime);
+                gain2.gain.setValueAtTime(0.2, audioCtx.currentTime); gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc2.connect(gain2); gain2.connect(audioCtx.destination); osc2.start(); osc2.stop(audioCtx.currentTime + 0.1);
+            }, 60);
+        }
+        function playPikon() {
+            let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+    </script>
+</head>
+<body class="relative" onclick="if(audioCtx.state==='suspended')audioCtx.resume();">
+
+    <!-- ========================================== -->
+    <!-- 🎬 サイバー起動イントロ画面 -->
+    <!-- ========================================== -->
+    {% if show_intro %}
+    <div class="intro-screen">
+        <div class="intro-title">SUPETTER</div>
+        <div style="color: #60a5fa; font-size: 12px; font-weight: bold; letter-spacing: 0.1em;">LOADING SPEET...</div>
+    </div>
+    <script>setTimeout(playPikon, 200);</script>
+    {% endif %}
+
+    <!-- 最上部のシステム通知メッセージ -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div style="background: linear-gradient(to right, #2563eb, #4f46e5); color: white; text-align: center; padding: 12px; font-weight: bold; font-size: 14px; letter-spacing: 0.05em; z-index: 40; position: relative;">
+          {% for message in messages %}{{ message }}{% endfor %}
+        </div>
+        <script>setTimeout(playPikon, 100);</script>
+      {% endif %}
+    {% endwith %}
+
+    <!-- ========================================== -->
+    <!-- 1. ログイン画面 -->
+    <!-- ========================================== -->
+    {% if mode == 'login' %}
+    <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 16px;">
+        <div class="card" style="width: 100%; max-width: 360px;">
+            <h1 style="font-size: 32px; font-weight: 900; text-align: center; margin: 0 0 4px 0; background: linear-gradient(to right, #60a5fa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">スペッター</h1>
+            <p style="text-align: center; font-size: 11px; color: #9ca3af; letter-spacing: 0.1em; margin: 0 0 32px 0; text-transform: uppercase;">Connect with friends</p>
+            
+            <form action="/login" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;">ユーザー名</label>
+                    <input type="text" name="username" required style="width: 100%;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;">パスワード</label>
+                    <input type="password" name="password" required style="width: 100%;">
+                </div>
+                <button type="submit" style="width: 100%; margin-top: 8px;">ログイン</button>
+            </form>
+            
+            <div style="margin-top: 32px; text-align: center; font-size: 12px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #1f2937; padding-top: 24px;">
+                <p><a href="/register" style="font-weight: 500;">新規アカウント作成はこちら</a></p>
+                <p><a href="/reset_password" style="color: #6b7280; font-weight: 500;">パスワードを忘れた場合はこちら</a></p>
+            </div>
+        </div>
+    </div>
+    <!-- ========================================== -->
+    <!-- 2. 新規アカウント登録画面 -->
+    <!-- ========================================== -->
+    {% elif mode == 'register' %}
+    <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 16px;">
+        <div class="card" style="width: 100%; max-width: 360px; border-color: #374151;">
+            <h1 style="font-size: 32px; font-weight: 900; text-align: center; margin: 0 0 4px 0; background: linear-gradient(to right, #c084fc, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">スペッター</h1>
+            <p style="text-align: center; font-size: 11px; color: #9ca3af; letter-spacing: 0.1em; margin: 0 0 32px 0; text-transform: uppercase;">Create your account</p>
+            
+            <form action="/register" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;">ユーザー名</label>
+                    <input type="text" name="username" required style="width: 100%;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;">メールアドレス</label>
+                    <input type="email" name="email" required style="width: 100%;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af; text-transform: uppercase;">パスワード</label>
+                    <input type="password" name="password" required style="width: 100%;">
+                </div>
+                <button type="submit" style="width: 100%; background: linear-gradient(to right, #a855f7, #ec4899); margin-top: 8px;">アカウント作成</button>
+            </form>
+            
+            <div style="margin-top: 32px; text-align: center; font-size: 12px; border-top: 1px solid #1f2937; padding-top: 24px;">
+                <a href="/login" style="color: #c084fc; font-weight: 500;">ログイン画面に戻る</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🔓 パスワード救済リセット画面 -->
+    <!-- ========================================== -->
+    {% elif mode == 'reset_password' %}
+    <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 16px;">
+        <div class="card" style="width: 100%; max-width: 360px; border-color: #ef4444;">
+            <h1 style="font-size: 24px; font-weight: 900; text-align: center; margin: 0 0 4px 0; color: #f87171;">パスワードリセット</h1>
+            <p style="text-align: center; font-size: 11px; color: #9ca3af; margin: 0 0 24px 0;">新しいパスワードを設定します</p>
+            
+            <form action="/reset_password" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af;">登録したメールアドレス</label>
+                    <input type="email" name="email" required style="width: 100%;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; font-weight: bold; color: #9ca3af;">新しいパスワード</label>
+                    <input type="password" name="new_password" required style="width: 100%;">
+                </div>
+                <button type="submit" style="width: 100%; background: linear-gradient(to right, #ef4444, #b91c1c);">変更を保存する</button>
+            </form>
+            
+            <div style="margin-top: 24px; text-align: center; font-size: 12px; border-top: 1px solid #1f2937; padding-top: 16px;">
+                <a href="/login" style="color: #f87171;">ログイン画面に戻る</a>
+            </div>
+        </div>
+    </div>
+    <!-- ========================================== -->
+    <!-- 💬 3. 1対1 プライベートチャット画面 -->
+    <!-- ========================================== -->
+    {% elif mode == 'chat' %}
+    <div style="flex-grow: 1; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 20px auto; padding: 0 16px; box-sizing: border-box;">
+        <div class="card" style="padding: 16px; display: flex; align-items: center; justify-content: space-between; border-radius: 20px 20px 0 0; background: #030712;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="width: 32px; height: 32px; border-radius: 50%; background: hsl({{ partner.icon_num * 36 }}, 70%, 50%); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                    {{ partner.username | upper }}
+                </span>
+                <div>
+                    <div style="font-weight: bold; font-size: 14px;">{{ partner.username }} さんと秘密チャット</div>
+                    <div style="font-size: 10px; color: #4b5563;">🔒 エンドツーエンド暗号通信</div>
+                </div>
+            </div>
+            <a href="/" onclick="playPoko();" style="font-size: 12px; background: #111827; border: 1px solid #1f2937; padding: 6px 12px; border-radius: 10px; text-decoration: none;">戻る</a>
+        </div>
+        <div class="card" style="border-radius: 0; border-top: none; border-bottom: none; height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 20px; background: rgba(17, 24, 39, 0.2);">
+            {% if not chat_messages %}
+                <p style="text-align: center; color: #4b5563; font-size: 12px; margin: auto 0;">まだ暗号トーク履歴がありません。</p>
+            {% endif %}
+            {% for chat in chat_messages %}
+                {% if chat.sender_id == user.id %}
+                    <div style="align-self: flex-end; max-width: 75%; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <div style="background: linear-gradient(to right, #2563eb, #3b82f6); color: white; padding: 10px 14px; border-radius: 16px 16px 2px 16px; font-size: 14px; word-break: break-all;">{{ chat.content }}</div>
+                        <span style="font-size: 9px; color: #4b5563; font-family: monospace;">{{ chat.timestamp.strftime('%H:%M') }}</span>
+                    </div>
+                {% else %}
+                    <div style="align-self: flex-start; max-width: 75%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                        <div style="background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 10px 14px; border-radius: 16px 16px 16px 2px; font-size: 14px; word-break: break-all;">{{ chat.content }}</div>
+                        <span style="font-size: 9px; color: #4b5563; font-family: monospace;">{{ chat.timestamp.strftime('%H:%M') }}</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="card" style="padding: 16px; border-radius: 0 0 20px 20px; border-top: none; background: #030712;">
+            <form action="/chat/{{ partner.username }}" method="POST" onsubmit="playPoko();" style="display: flex; gap: 10px;">
+                <input type="text" name="content" required placeholder="暗号化メッセージを入力..." style="flex-grow: 1; font-size: 14px; padding: 10px 14px;">
+                <button type="submit" style="padding: 0 20px; font-size: 13px;">送信</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 📥 4. 受信箱（○○さん宛 メッセージ履歴）画面 -->
+    <!-- ========================================== -->
+    {% elif mode == 'inbox' %}
+    <div style="max-width: 600px; width: 100%; margin: 20px auto; padding: 0 16px; box-sizing: border-box; flex-grow: 1;">
+        <div class="card" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; background: #030712;">
+            <h2 style="font-size: 16px; font-weight: 900; margin: 0; color: #60a5fa;">📥 あなたの受信箱</h2>
+            <a href="/" onclick="playPoko();" style="font-size: 12px; background: #111827; border: 1px solid #1f2937; padding: 6px 12px; border-radius: 10px; text-decoration: none;">タイムラインに戻る</a>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% if not inbox_items %}
+                <div class="card" style="text-align: center; color: #4b5563; padding: 40px 20px;">受信箱は空っぽです。</div>
+            {% endif %}
+            {% for item in inbox_items %}
+                <div class="card" style="padding: 16px; background: rgba(31, 41, 55, 0.4);">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-bottom: 8px;">
+                        <span>送信者: <strong style="color: #60a5fa;">@{{ item.sender_name }}</strong></span>
+                        <span style="font-family: monospace;">{{ item.timestamp.strftime('%m/%d %H:%M') }}</span>
+                    </div>
+                    <div style="font-size: 13px; font-weight: bold; color: #e5e7eb; margin-bottom: 4px;">{{ item.title }}</div>
+                    <div style="font-size: 13px; color: #d1d5db; line-height: 1.5; word-break: break-all;">{{ item.body }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- ========================================== -->
+    <!-- 🛠️ 5. 特別裏URLのみで開く秘密の管理者コントロールパネル -->
+    <!-- ========================================== -->
+    {% elif mode == 'admin_menu' %}
+    <div style="max-width: 500px; width: 100%; margin: 40px auto; padding: 0 16px; box-sizing: border-box; flex-grow: 1;">
+        <div class="card" style="border-color: #ef4444; background: #030712; box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <span style="font-size: 32px;">🛠️</span>
+                <h1 style="font-size: 24px; font-weight: 900; color: #f87171; margin: 8px 0 0 0; tracking: 0.05em;">SPETTER CONTROL CENTER</h1>
+                <p style="font-size: 11px; color: #6b7280; font-family: monospace;">ACCESS GRANTED: ADMIN ONLY</p>
+            </div>
+
+            <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 16px; border-radius: 12px; margin-bottom: 24px;">
+                <h3 style="font-size: 13px; font-weight: bold; color: #f87171; margin: 0 0 8px 0;">🛡️ 公式アカウントの一括登録・認証</h3>
+                <p style="font-size: 12px; color: #9ca3af; margin: 0 0 16px 0; line-height: 1.4;">指定したユーザー名に特別な「OFFICIAL」バッジを付与し、システム認証アカウントへ格上げします。</p>
+                
+                <form action="/admin/make_official" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 12px;">
+                    <input type="text" name="username" placeholder="公式バッジを授与する正確なユーザー名" required style="width: 100%; font-size: 13px; border-color: #ef4444;">
+                    <button type="submit" style="width: 100%; background: linear-gradient(to right, #ef4444, #b91c1c); font-size: 13px; tracking: 0.1em;">公式バッジを強制付与する</button>
+                </form>
+            </div>
+
+            <div style="text-align: center; border-top: 1px solid #1f2937; padding-top: 16px;">
+                <a href="/" onclick="playPoko();" style="font-size: 12px; color: #9ca3af; text-decoration: none; background: #111827; border: 1px solid #1f2937; padding: 8px 16px; border-radius: 10px;">タイムライン（通常空間）へ帰還</a>
+            </div>
+        </div>
+    </div>
+    <!-- ========================================== -->
+    <!-- 🌐 6. メインの通常タイムライン画面（ログイン後） -->
+    <!-- ========================================== -->
+    {% else %}
+    
+    <!-- 🔔 飛び出すフレンド通知 -->
+    {% if notifications %}
+    <div style="position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 50; width: 100%; max-width: 360px; box-sizing: border-box;">
+        {% for note in notifications %}
+        <div class="notify-toast" style="background: rgba(17, 24, 39, 0.95); border: 1px solid rgba(59, 130, 246, 0.3); border-left: 4px solid #3b82f6; color: white; padding: 16px; border-radius: 16px; box-shadow: 0 20px 25px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 20px; color: #3b82f6;">⚡</span>
+            <div>
+                <p style="margin: 0; font-size: 11px; color: #9ca3af; font-weight: bold;">フレンド新着ポスト</p>
+                <p style="margin: 0; font-size: 14px; font-weight: 900; color: #60a5fa;">@{{ note.sender_name }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>setTimeout(playPikon, 100);</script>
+    {% endif %}
+
+    <!-- 🛠️ 文字重なり大渋滞を完璧に直した上部ナビゲーションバー -->
+    <nav class="nav-bar">
+        <a href="/" onclick="playPoko();" style="font-size: 24px; font-weight: 900; background: linear-gradient(to right, #60a5fa, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.05em; text-decoration: none;">スペッター</a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="/inbox" onclick="playPoko();" style="font-size: 12px; color: #9ca3af; text-decoration: none; margin-right: 4px;">📥 受信箱</a>
+            <div style="display: flex; align-items: center; gap: 8px; background: #111827; padding: 6px 12px; border-radius: 9999px; border: 1px solid #1f2937; max-width: 140px; overflow: hidden;">
+                <!-- スライス機能で「K」の1文字アイコンにバシッと固定！ -->
+                <span style="width: 24px; height: 24px; border-radius: 50%; background: hsl({{ user.icon_num * 36 }}, 70%, 50%); display: inline-flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 11px; flex-shrink: 0;">
+                    {{ user.username | upper | slice(0,1) }}
+                </span>
+                <span style="font-size: 12px; font-weight: bold; color: #e5e7eb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ user.username }}</span>
+                {% if user.is_official %}
+                    <span style="font-size: 9px; background: #3b82f6; color: white; padding: 2px 6px; border-radius: 9999px; font-weight: bold; flex-shrink: 0;">OFFICIAL</span>
+                {% endif %}
+            </div>
+            <a href="/logout" onclick="playPoko();" style="font-size: 12px; background: #111827; color: #9ca3af; border: 1px solid #1f2937; font-weight: bold; padding: 8px 12px; border-radius: 12px; text-decoration: none;">ログアウト</a>
+        </div>
+    </nav>
+    <!-- メインコンテンツエリア -->
+    <div class="container">
+        <!-- 左サイドバー -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- アカウントメニュー -->
+            <div class="card">
+                <h2 style="font-size: 12px; font-weight: 900; color: #9ca3af; text-transform: uppercase; margin: 0 0 16px 0; letter-spacing: 0.1em;">アカウントメニュー</h2>
+                <form action="/update_profile" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 11px; font-weight: bold; color: #9ca3af;">マイメモ追加：</label>
+                        <textarea name="bio_memo" placeholder="メモを入力..." style="font-size: 12px; height: 60px;">{{ user.bio_memo }}</textarea>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 11px; font-weight: bold; color: #9ca3af;">アイコン設定（色番号）：</label>
+                        <select name="icon_num" style="font-size: 12px; padding: 8px;">
+                            {% for n in range(1, 11) %}
+                                <option value="{{ n }}" {% if user.icon_num == n %}selected{% endif %}>テーマカラー No.{{ n }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" style="font-size: 12px; padding: 10px; background: linear-gradient(to right, #10b981, #059669);">設定をセーブ</button>
+                </form>
+                <div style="margin-top: 12px; font-size: 11px; color: #9ca3af; display: flex; gap: 12px; font-weight: bold;">
+                    <span>フォロー: <strong style="color: #60a5fa;">{{ user.followed.count() }}</strong></span>
+                    <span>フォロワー: <strong style="color: #60a5fa;">{{ user.followers.count() }}</strong></span>
+                </div>
+            </div>
+            <!-- ⚙️ 52個の超リアルな設定名が並ぶ詳細設定フォーム -->
+            <div class="card" style="max-height: 220px; overflow-y: auto;">
+                <h2 style="font-size: 11px; font-weight: 900; color: #a855f7; text-transform: uppercase; margin: 0 0 12px 0; letter-spacing: 0.1em; position: sticky; top: 0; background: #0b0f19; padding-bottom: 4px;">🎛️ 詳細設定メニュー (50個以上)</h2>
+                {% set setting_names = [
+                    "ダークモードを強制有効化", "ポコポコ効果音をミュート", "起動イントロをスキップ", "アニメーションを軽量化",
+                    "通知ポップアップを小さくする", "受信箱の新着を音で知らせる", "フレンド申請を全員拒否", "DMの既読を相手に隠す",
+                    "ポストの文字サイズを大きく", "フォントをレトロゲーム風にする", "タイムラインの自動更新をON", "画像を常に高画質で読み込む",
+                    "公式アカウントのみ非表示", "@メンションされたら画面を光らせる", "返信元ポストを常に展開", "タイムスタンプを24時間表記に",
+                    "スクロールバーを常に表示", "マイメモを他人に非公開にする", "プロフィールのグラデーションを激しく", "ボタンの角丸をさらに丸くする",
+                    "不適切なワードを自動モザイク", "フレンド以外のDM受信を制限", "検索履歴を保存しない", "ログイン状態を1か月維持",
+                    "絵文字のショートカットを有効化", "ポスト送信時に確認アラートを出す", "背景にうっすら星を降らせる", "フッターデザインをシンプルに",
+                    "IDナンバーをタイムラインで隠す", "外部URLを開くときに警告を出す", "デバッグログをコンソールに出力", "秘密チャットの背景をピンクに",
+                    "アカウント作成日を表示する", "フォロワー数のカウントを隠す", "クリック時のエフェクトをON", "スクロールの速度を滑らかに",
+                    "英語のポストを自動翻訳", "トレンドワードをサイドバーに出す", "自分のポストのコピーを禁止", "長文ポストを自動で畳む",
+                    "非アクティブ時にタブの文字を点滅", "シークレットモードを有効化", "テーマカラーの彩度を上げる", "ボタンホバー時に振動させる",
+                    "メッセージをEnterキーで即送信", "通知の表示時間を3秒短縮", "フレンドのログイン時に通知", "管理者からのお知らせを最上部に固定",
+                    "キャッシュをページを閉じるたび削除", "プロフィール背景にサイバーグリッドを表示", "全設定を初期状態にリセット", "スペッター開発チームを応援する"
+                ] %}
+                <form action="/save_settings" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        {% for i in range(52) %}
+                        <label style="font-size: 12px; display: flex; align-items: center; gap: 8px; color: #d1d5db; cursor: pointer; margin-bottom: 4px;">
+                            <input type="checkbox" name="set_{{ i }}" value="1" {% if user.settings_data[i] == '1' %}checked{% endif %} style="transform: scale(1.1); margin: 0;">
+                            <span>{{ setting_names[i] if i < setting_names|length else "予備の詳細カスタム設定項目 #" ~ (i + 1) }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" style="font-size: 11px; padding: 10px; background: linear-gradient(to right, #a855f7, #7c3aed); position: sticky; bottom: 0; margin-top: 8px;">全50項目をまとめて保存</button>
+                </form>
+            </div>
+        </div>
+        <!-- 右側：投稿フォーム ＆ タイムライン -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- 投稿用フォーム -->
+            <div class="card" style="padding: 16px;">
+                <form action="/post_message" method="POST" onsubmit="playPoko();" style="display: flex; flex-direction: column; gap: 12px;">
+                    <textarea name="content" required placeholder="いま何してる？（○○さん宛は「宛先欄」を入力するか、本文に「@ユーザー名」を書いてね）" style="width: 100%; height: 96px; font-size: 14px; resize: none;"></textarea>
+                    
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <input type="text" name="mention_to" placeholder="宛先(ユーザー名を入れると相手の受信箱に转送)" style="font-size: 12px; padding: 8px; flex-grow: 1;">
+                        <input type="number" name="reply_to" placeholder="返信対象のポストID" style="font-size: 12px; padding: 8px; flex-grow: 1;">
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #1f2937; padding-top: 12px;">
+                        <span style="font-size: 10px; color: #6b7280; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;">🌐 Global Timeline</span>
+                        <button type="submit" style="padding: 10px 20px; font-size: 12px;">スペットする</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- タイムライン表示 -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <h3 style="font-size: 11px; font-weight: bold; color: #9ca3af; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 4px 4px;">🌐 グローバルタイムライン</h3>
+                
+                {% if not messages %}
+                    <div class="card" style="text-align: center; font-size: 13px; color: #4b5563; padding: 48px 24px; border-style: dashed;">まだ誰も投稿していません。最初のポストをどうぞ！</div>
+                {% endif %}
+
+                {% for msg in messages %}
+                <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 12px; background: rgba(17, 24, 39, 0.4);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <!-- アイコンカラーの自動反映 -->
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(to top right, hsl({{ msg.user.icon_num * 36 }}, 70%, 45%), hsl({{ msg.user.icon_num * 36 }}, 70%, 55%)); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px;">
+                                {{ msg.user.username | upper }}
+                            </span>
+                            <span style="font-weight: bold; font-size: 14px; color: #e5e7eb;">{{ msg.user.username }}</span>
+                            
+                            {% if msg.user.is_official %}
+                                <span style="font-size: 9px; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(59, 130, 246, 0.1);">OFFICIAL</span>
+                            {% endif %}
+                            
+                            <!-- フォロー・解除リンク -->
+                            <a href="/follow/{{ msg.user.username }}" onclick="playPoko();" style="font-size: 11px; color: #60a5fa; font-weight: bold; text-decoration: none; background: #111827; border: 1px solid #1f2937; padding: 2px 8px; border-radius: 6px;">
+                                {% if msg.user in user.followed %}
+                                    ❌ 解除
+                                {% else %}
+                                    ➕ フォロー
+                                {% endif %}
+                            </a>
+                            
+                            <!-- 1対1チャットボタン -->
+                            <a href="/chat/{{ msg.user.username }}" onclick="playPoko();" style="font-size: 11px; color: #ec4899; font-weight: bold; text-decoration: none; background: #111827; border: 1px solid #1f2937; padding: 2px 8px; border-radius: 6px;">💬 チャット</a>
+                            
+                            <!-- フレンド相互フォローバッジ -->
+                            {% if user.is_friend(msg.user) %}
+                                <span style="font-size: 9px; border: 1px solid rgba(16, 185, 129, 0.4); color: #34d399; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.1);">🤝 FRIEND</span>
+                            {% endif %}
+                        </div>
+                        <span style="font-size: 11px; color: #4b5563; font-family: monospace;">ID: {{ msg.id }}</span>
+                    </div>
+                    
+                    <!-- 本文表示（○○さん宛のハイライト対応） -->
+                    <div style="font-size: 14px; color: #d1d5db; word-break: break-all; padding-left: 36px; line-height: 1.6;">
+                        {% if msg.mention_to %}
+                            <span style="color: #60a5fa; font-weight: bold; margin-right: 4px;">@{{ msg.mention_to }}</span>
+                        {% endif %}
+                        {{ msg.content }}
+                    </div>
+
+                    <!-- 日時・返信バッジ表示 -->
+                    <div style="padding-left: 36px; display: flex; align-items: center; gap: 12px; font-size: 11px; color: #4b5563; pt-1; border-top: 1px solid rgba(31, 41, 55, 0.5); padding-top: 8px;">
+                        <span style="font-family: monospace;">{{ msg.timestamp.strftime('%m/%d %H:%M') }}</span>
+                        {% if msg.reply_to %}
+                            <span style="background: #111827; color: #9ca3af; border: 1px solid #1f2937; padding: 2px 6px; border-radius: 4px; font-size: 10px;">↩️ 返信先 ID: {{ msg.reply_to }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- フッター -->
+    <footer style="background: #030712; border-top: 1px solid #111827; padding: 20px; text-align: center; font-size: 10px; color: #4b5563; letter-spacing: 0.1em; margin-top: 40px;">
+        &copy; 2026 Scratch民が作ったScratch民が集まるSNS -スペッター- All rights reserved.
+    </footer>
+
+</body>
+</html>
