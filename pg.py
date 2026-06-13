@@ -336,6 +336,12 @@ def make_official():
     else:
         flash('ユーザーが見つかりません。')
     return redirect(url_for('admin_menu'))
+from fastapi.responses import FileResponse
+
+@app.get("/google9645a7e6d72f3e72.html", response_class=FileResponse)
+def google_verify():
+    # ルートディレクトリにあるhtmlファイルを返します
+    return "google9645a7e6d72f3e72.html"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
