@@ -336,13 +336,10 @@ def make_official():
     else:
         flash('ユーザーが見つかりません。')
     return redirect(url_for('admin_menu'))
-
-
 @app.route('/google9645a7e6d72f3e72.html')
 def google_verify():
+    import os
     from flask import send_from_directory
-    return send_from_directory('.', 'google9645a7e6d72f3e72.html')
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # pg.pyがあるフォルダーの絶対パスを自動で取得してファイルを配信します
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return send_from_directory(base_dir, 'google9645a7e6d72f3e72.html')
